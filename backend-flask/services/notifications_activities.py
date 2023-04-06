@@ -6,11 +6,7 @@ class NotificationsActivities:
     def run():
         # xray --------------
         # with xray_recorder.in_segment('notifications_activities') as segment:
-        segment = xray_recorder.begin_segment('notifications_activities')
-        model = {
-            'errors': None,
-            'data': None
-        }
+        
         now = datetime.now(timezone.utc).astimezone()
 
         results = [{
@@ -34,15 +30,13 @@ class NotificationsActivities:
             }],
         },
         ]
-        model['data'] = results
-
-        subsegment = xray_recorder.begin_subsegment('mock_data')
-        # xray --------------
-
+        subsegment = xray_recorder.begin_subsegment('mock-data')
+        # xray ---
         dict = {
             "now": now.isoformat(),
-            "results-size": len(model['data'])
+            "results-size": len(results)
         }
-
-        segment.put_metadata('key', dict, 'namespace')
+        subsegment.put_metadata('key', dict, 'namespace')
+        xray_recorder.end_subsegment()
+      
         return results

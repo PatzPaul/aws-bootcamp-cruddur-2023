@@ -17,7 +17,7 @@ tasks:
 
   - name: react-js
     command: |
-      cd /workspace frontend-react-js
+      cd frontend-react-js
       npm i
 vscode:
   extensions:
