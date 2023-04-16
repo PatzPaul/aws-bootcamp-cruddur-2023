@@ -39,13 +39,13 @@ import rollbar.contrib.flask
 from flask import got_request_exception
 
 # Configuring Logger to Use CloudWatch
-LOGGER = logging.getLogger(__name__)
-LOGGER.setLevel(logging.DEBUG)
-console_handler = logging.StreamHandler()
-cw_handler = watchtower.CloudWatchLogHandler(log_group='cruddur')
-LOGGER.addHandler(console_handler)
-LOGGER.addHandler(cw_handler)
-LOGGER.info("Test log")
+# LOGGER = logging.getLogger(__name__)
+# LOGGER.setLevel(logging.DEBUG)
+# console_handler = logging.StreamHandler()
+# cw_handler = watchtower.CloudWatchLogHandler(log_group='cruddur')
+# LOGGER.addHandler(console_handler)
+# LOGGER.addHandler(cw_handler)
+# LOGGER.info("Test log")
 
 
 # Honeycomb 1-------------------------
@@ -65,6 +65,7 @@ xray_recorder.configure(service='backend-flask', dynamic_naming=xray_url)
 
 trace.set_tracer_provider(provider)
 tracer = trace.get_tracer(__name__)
+logger = logging.getLogger(__name__)
 
 
 app = Flask(__name__)
@@ -112,12 +113,17 @@ def init_rollbar():
     got_request_exception.connect(rollbar.contrib.flask.report_exception, app)
 
 
-@app.after_request
-def after_request(response):
-    timestamp = strftime('[%Y-%b-%d %H:%M]')
-    LOGGER.error('%s %s %s %s %s %s', timestamp, request.remote_addr,
-                 request.method, request.scheme, request.full_path, response.status)
-    return response
+@app.route('/rollbar/test')
+def rollbar_test():
+    rollbar.report_message('Hello World!', 'warning')
+    return "Hello World!"
+
+# @app.after_request
+# def after_request(response):
+#   timestamp = strftime('[%Y-%b-%d %H:%M]')
+#   LOGGER.error('%s %s %s %s %s %s', timestamp, request.remote_addr,
+#                request.method, request.scheme, request.full_path, response.status)
+#  return response
 
 
 @app.route("/api/message_groups", methods=['GET'])
@@ -160,27 +166,17 @@ def data_create_message():
     return
 
 
-@app.route('/rollbar/test')
-def rollbar_test():
-    rollbar.report_message('Hello World!', 'warning')
-    return "Hello World!"
-
-
 @app.route("/api/activities/home", methods=['GET'])
 @xray_recorder.capture('activities_home')
 def data_home():
-    app.LOGGER.debug("AUTH HEADER")
-    print(
-        request.headers.get('Authorization')
-    )
-    data = HomeActivities.run()
+    data = HomeActivities.run(logger)
     return data, 200
 
 
 @app.route("/api/activities/notifications", methods=['GET'])
 @xray_recorder.capture('activities_notifications')
 def data_notifications():
-    data = NotificationsActivities.run()
+    data = NotificationsActivities.run(logger=LOGGER)
     return data, 200
 
 
